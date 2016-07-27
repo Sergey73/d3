@@ -1,4 +1,8 @@
 (function () {
+	var himki = {};
+	var metropolis = {};
+	var shuka = {};
+
   d3.csv("./data/visitors.csv", function(error, data) {
     if (error) throw error;
     preParceDann("dt","%Y-%m-%d",["age", "customers_cnt", "gender", "hour"], data);
@@ -8,9 +12,24 @@
           .key(function(d) { return d.tid; })
           .entries(data);
     console.dir(dataGroup);
+    dataGroup.forEach(function (shop) {
+    	shop.key == "Himki" ? himki.values = shop.values :
+    		shop.key == "Shuka" ? shuka.values = shop.values :
+	    		shop.key == "Metropolis" ? metropolis.values = shop.values : null;
+    });
 
+    // минимальное и максимальное значение даты 
+    himki['minMaxDate'] = getMinMaxDate(himki.values);
+    metropolis['minMaxDate'] = getMinMaxDate(shuka.values);
+    shuka['minMaxDate'] = getMinMaxDate(metropolis.values);
+    console.dir(himki.minMaxDate);
   });
 
+  function getMinMaxDate (data) {
+    return d3.extent(data, function(d) { 
+    	return d.dt; 
+    });
+  }
 
   // функция преобразования форматов данных
   function preParceDann(dateColumn, dateFormat, usedNumColumns, data){
