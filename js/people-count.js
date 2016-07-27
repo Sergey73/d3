@@ -18,11 +18,20 @@
 	    		shop.key == "Metropolis" ? metropolis.values = shop.values : null;
     });
 
-    // минимальное и максимальное значение даты 
+    // минимальное и максимальное значение даты торговых центров
     himki['minMaxDate'] = getMinMaxDate(himki.values);
     metropolis['minMaxDate'] = getMinMaxDate(shuka.values);
     shuka['minMaxDate'] = getMinMaxDate(metropolis.values);
-    console.dir(himki.minMaxDate);
+
+    var people = crossfilter(himki.values);
+    var all = people.groupAll();
+
+    var date = people.dimension(function(d) { return d.dt; });
+    var dates = date.group(d3.timeDay);
+    dates.groupId = "dates";
+
+    console.dir(dates);
+
   });
 
   function getMinMaxDate (data) {
