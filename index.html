@@ -3,18 +3,20 @@
 	<head>
 		<meta charset=utf-8 />
 		<title>A simple map</title>
-		<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-		<script src='https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.js'></script>
-		<link href='https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.css' rel='stylesheet' />
-		<!-- <script src="https://d3js.org/d3.v4.min.js"></script> -->
+		<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+		<script src="https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.js"></script>
+		<link href="https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.css" rel="stylesheet" />
 		<script src="./js/d3.js"></script>
 		<script src="./js/crossfilter.min.js"></script>
 		<script src="./js/dc.min.js"></script>
 		<link rel="stylesheet" href="./css/style.css">
 	</head>
 	<body>
-		<div id='map'></div>
-		<div id="peopleCount"></div>
+		<div id="map"></div>
+		<div class="container">
+			<span>График посещения ТРЦ Мега Химки</span>
+			<div id="peopleCount"></div>
+		</div>
 		<script src="./js/map.js"></script>
 		<script src="./js/people-count.js"></script>
 	</body>
