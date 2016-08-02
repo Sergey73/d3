@@ -8,6 +8,7 @@ body {
 	bottom:0;
 	width:100%;
 	height: 100%;
+	display: none;
 }
 .dc-chart .axis text {
   font-size: 12px;
