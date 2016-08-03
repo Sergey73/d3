@@ -20,7 +20,6 @@
     		shop.key == "Shuka" ? shuka.values = shop.values :
 	    		shop.key == "Metropolis" ? metropolis.values = shop.values : null;
     });
-
     // минимальное и максимальное значение даты торговых центров
     himki['minMaxDate'] = getMinMaxDate(himki.values);
     metropolis['minMaxDate'] = getMinMaxDate(shuka.values);
@@ -66,24 +65,26 @@
     var chart = dc.barChart("#peopleCount");
 
     chart
-      .width(1000)
+      .width(800)
       .height(300)
       .x(d3.time.scale([new Date(himki.minMaxDate[0]), new Date(himki.minMaxDate[1])]))
-      .y(d3.scale.linear().domain([0, maxPeopleInDay]))
+      .margins({top: 10, left: 80, right: 10, bottom: 30})
+      .y(d3.scale.linear().domain([0, maxPeopleInDay + 1000]))
       .xUnits(d3.time.days)
       .elasticX(true)
       .xAxisPadding(1)
       .yAxisLabel("Количество людей")
       .dimension(dateByDay)
       .group(daysGroup)
-      .margins({top: 100, left: 80, right: 10, bottom: 30})
       .transitionDuration(1500)
       .colors('red')
       .centerBar(true)
       .barPadding(1)
-      .label(function(d) { 
-        return d.y; }
-        )
+      .clipPadding(10)     
+      .renderLabel(true)
+      // .label(function(d) { 
+      //   return d.y; }
+      //   )
       .filterHandler(function(dimension, filter){
         // обработка фильтра
         // debugger
@@ -111,6 +112,9 @@
       .height(200)
       .dimension(dateByGender)
       .group(genderGroup)
+      // .renderTitle(true)
+      // .title(function(d) { 
+      //   return d.key + ": " + d.value; })
       .label(function(d) { 
         var result;
         if (d.key == 1) {
