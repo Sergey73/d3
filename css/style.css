@@ -12,6 +12,7 @@ body {
 .dc-chart text {
   font-size: 12px;
 }
+
 /* .dc-chart .brush rect.extent {
     fill: steelblue;
     fill-opacity: .125;
@@ -30,5 +31,5 @@ body {
 	text-align: center;
 	background-color: rgba(1,1,1,0.1);
 	width:100%;
-	bottom: 0;
+	bottom: 20px;
 }

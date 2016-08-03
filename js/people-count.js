@@ -68,7 +68,7 @@
       .width(800)
       .height(300)
       .x(d3.time.scale([new Date(himki.minMaxDate[0]), new Date(himki.minMaxDate[1])]))
-      .margins({top: 10, left: 80, right: 10, bottom: 30})
+      .margins({top: 10, left: 80, right: 10, bottom: 40})
       .y(d3.scale.linear().domain([0, maxPeopleInDay + 1000]))
       .xUnits(d3.time.days)
       .elasticX(true)
@@ -93,6 +93,27 @@
         //   return newFilter; // set the actual filter value to the new value
       })
       .renderlet(function(chart){
+        // поворот текста на 45 градусов для оси Х 
+        chart.selectAll('g.x text')
+          .attr('transform', 'translate(-10,10) rotate(315)');
+       
+
+        // // поворот текста для значений 
+        // chart.selectAll('.barLabel')
+        //   .attr({
+        //     'transform': 
+        //       function(d){ 
+        //       var x = this.getAttribute('x');
+        //       var y = this.getAttribute('y');
+        //       return "rotate(90," + x +"," + y + ")";
+        //     },
+        //     'x': function() {
+        //       return this.getAttribute('x') - 15;
+        //     },
+        //     'y': function() {
+        //       return +this.getAttribute('y') + 4;
+        //     }
+        // });
 
         // smooth the rendering through event throttling
         // dc.events.trigger(function(){
