@@ -16,12 +16,43 @@
 	</head>
 	<body>
 		<div id="map"></div>
+
 		<div class="container">
-			<span>График посещения ТРЦ Мега Химки!!!</span>
-			<div id="ringChart"></div>
-			<div id="peopleCount">
-				<div class="filters"></div>
+			<div> Количество людей посетивших ТР за месяц: 
+				<span>
+					<spnan id="total"></span>
+					человек. 
+				</span>
 			</div>
+
+			<div class="dc-data-count">
+	      <span>
+	        <span class="filter-count"></span>
+	      	человека за период 
+	        <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
+	      </span>
+		  </div>
+			
+			<div>
+				<span>График посещения ТРЦ Мега Химки!!</span>
+			</div>
+			
+			<div id="sexChart">
+			</div>
+
+			<div id="ageChart">
+			</div>
+
+			<div id="peopleCount">
+				<div class=".dc-data-count">
+					<span class="filter-count"></span>
+					<span class="total-count"></span>
+				</div>
+				<div class="reset">
+					<span class="filter"></span>
+				</div>
+			</div>
+
 		</div>
 		<script src="./js/map.js"></script>
 		<script src="./js/people-count.js"></script>

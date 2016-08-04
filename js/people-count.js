@@ -16,9 +16,9 @@
           .key(function(d) { return d.tid; })
           .entries(data);      
     dataGroup.forEach(function (shop) {
-    	shop.key == "Himki" ? himki.values = shop.values :
-    		shop.key == "Shuka" ? shuka.values = shop.values :
-	    		shop.key == "Metropolis" ? metropolis.values = shop.values : null;
+      shop.key == "Himki" ? himki.values = shop.values :
+        shop.key == "Shuka" ? shuka.values = shop.values :
+          shop.key == "Metropolis" ? metropolis.values = shop.values : null;
     });
     // минимальное и максимальное значение даты торговых центров
     himki['minMaxDate'] = getMinMaxDate(himki.values);
@@ -27,49 +27,64 @@
 
     // преобразование данных с попошью библиотеки crossfilter
     var dataCross = crossfilter(himki.values);
+    var all = dataCross.groupAll();
+
+    // общее количество людей
+    var totalPeople = all.reduceSum(function(d){
+      return +d.customers_cnt;
+    });
+
+    // всего людей за месяц
+    d3.select("#total").text(totalPeople.value());
+
+    // вывод текста общее количество людей 
+    dc.dataCount('.dc-data-count')
+      .dimension(dataCross)
+      .group(all);
+
 
     // dimension по дате
     var dateByDay = dataCross.dimension(function(d) { return d.dt; });    
-    // var all = dataCross.groupAll();
-
     // создаем группы по дням
     var daysGroup = dateByDay.group(d3.time.day)
     // считаем количество людей посетивших торговый центр за день
-      .reduce(reduceAdd, reduceRemove, reduceInitial);
-     
+      // .reduce(reduceAdd, reduceRemove, reduceInitial);
+      .reduceSum(function(d) {
+      return +d.customers_cnt;
+    });
     // создаем группы по часам
     var hoursGroup = dateByDay.group(d3.time.hour)
     // считаем количество людей посетивших торговый центр за час
-      .reduce(reduceAdd, reduceRemove, reduceInitial);
+      // .reduce(reduceAdd, reduceRemove, reduceInitial);
 
-    function reduceAdd(p, v) {
-      p += v.customers_cnt;
-      return p;
-    }
+    // function reduceAdd(p, v) {
+    //   p += v.customers_cnt;
+    //   return p;
+    // }
 
-    function reduceRemove(p, v) {
-      p -= v.customers_cnt;
-      return p;
-    }
+    // function reduceRemove(p, v) {
+    //   p -= v.customers_cnt;
+    //   return p;
+    // }
 
-    function reduceInitial() {
-      return 0;
-    }
+    // function reduceInitial() {
+    //   return 0;
+    // }
 
     // максимальное посещение в день
     var maxPeopleInDay = d3.max(daysGroup.top(Infinity), function (d) { return d.value; });
     // максимальное посещение за час
     var maxPeopleInHour = d3.max(hoursGroup.top(Infinity), function (d) { return d.value; });
-  
-    // создаем график 
+
+    // создаем график по времени 
     var chart = dc.barChart("#peopleCount");
 
     chart
       .width(800)
       .height(300)
       .x(d3.time.scale([new Date(himki.minMaxDate[0]), new Date(himki.minMaxDate[1])]))
-      .margins({top: 10, left: 80, right: 10, bottom: 40})
       .y(d3.scale.linear().domain([0, maxPeopleInDay + 1000]))
+      .margins({top: 10, left: 80, right: 10, bottom: 40})
       .xUnits(d3.time.days)
       .elasticX(true)
       .xAxisPadding(1)
@@ -79,19 +94,26 @@
       .transitionDuration(1500)
       .colors('red')
       .centerBar(true)
+      .brushOn(true)
       .barPadding(1)
       .clipPadding(10)     
       .renderLabel(true)
+
+      // my значение
       // .label(function(d) { 
       //   return d.y; }
-      //   )
-      .filterHandler(function(dimension, filter){
-        // обработка фильтра
-        // debugger
-        //   var newFilter = filter + 10;
-        //   dimension.filter(newFilter);
-        //   return newFilter; // set the actual filter value to the new value
-      })
+      // )
+      // end my значение
+
+      // my обработка фильтра
+      // .filterHandler(function(dimension, filter){
+      //   // обработка фильтра
+      //   //   var newFilter = filter + 10;
+      //   //   dimension.filter(newFilter);
+      //   //   return newFilter; // set the actual filter value to the new value
+      // })
+      // end my обработка фильтра
+
       .renderlet(function(chart){
         // поворот текста на 45 градусов для оси Х 
         chart.selectAll('g.x text')
@@ -122,20 +144,32 @@
         // });
       });
     
-    // pipe chart
-    // dimension по полу
-    var ringChart    = dc.pieChart("#ringChart");
-    var dateByGender = dataCross.dimension(function(d) { return d.gender; });
-    var genderGroup  = dateByGender.group().reduceCount();
 
-    ringChart
-      .width(200)
-      .height(200)
+  // sex chart
+    var sexChart    = dc.pieChart("#sexChart");
+    
+    // dimension по полу
+    var dateByGender = dataCross.dimension(function(d) { return d.gender; });
+    
+    // my
+    // фильтруем по значению 2 (женщины)    
+    // var e =dateByGender.filter("2");
+    // считаем общее количество женщин
+    // var x = dataCross.groupAll().reduceCount().value();
+    // очищаем группу
+    // dateByGender.filterAll();
+    // end my 
+
+    // делим на группы ж/м и подсчитываем общее количество каждой группы.
+    var genderGroup  = dateByGender.group().reduceSum(function(d) {
+      return +d.customers_cnt;
+    });
+
+    sexChart
+      .width(100)
+      .height(100)
       .dimension(dateByGender)
       .group(genderGroup)
-      // .renderTitle(true)
-      // .title(function(d) { 
-      //   return d.key + ": " + d.value; })
       .label(function(d) { 
         var result;
         if (d.key == 1) {
@@ -145,13 +179,62 @@
         }
         return result;
       });
-      // .x(d3.scale.linear().domain([0,10]))
-      // .elasticY(true);
-    // end pipe chart
+  // end sex chart
 
+  // age chart
+    var ageChart    = dc.pieChart("#ageChart");
+    
+    // dimension по возрасту
+    var dateByAge = dataCross.dimension(function(d) { return d.age; });
+    
+    // делим на группы по возрасту и подсчитываем общее количество каждой группы.
+    var ageGroup  = dateByAge.group().reduceSum(function(d) {
+      return +d.customers_cnt;
+    });
+
+    ageChart
+      .width(200)
+      .height(200)
+      .dimension(dateByAge)
+      .group(ageGroup)
+      .label(function(d) { 
+        var result;
+        if (d.key == 1) {
+          result = 'от 18 до 24 : ' + d.value;
+        } else if (d.key == 2) {
+          result = 'oт 25 до 35: ' + d.value;
+        } else if (d.key == 3) {
+          result = 'oт 36 до 45: ' + d.value;
+        } else if (d.key == 4) {
+          result = 'oт 46 до 55: ' + d.value;
+        }
+        return result;
+      });
+  // age end chart
     dc.renderAll();
   });
+  
+  // Отображение географии проживания и работы посетителей по каждому ТЦ в виде тепловой карты
+  d3.csv("./data/geoLivingWorking.csv", function(error, data) { 
+    preParceDann("dt","%Y-%m-%d",['zid_oktmo','gender', 'age', 'customers_cnt_home', 'customers_cnt_work'], data);
 
+    // преобразование данных с попошью библиотеки crossfilter
+    var geoDataCross = crossfilter(data);
+    var allGeoData = geoDataCross.groupAll();
+    
+    var dataByRegion = geoDataCross.dimension(function(d) { return d.zid_oktmo;}); 
+    // var geoHimki = dataByShops.filter('Himki');
+    var regionGroup = dataByRegion.group();
+    debugger
+
+    // // создаем группы по дням
+    // var daysGroup = dateByDay.group(d3.time.day)
+    // // считаем количество людей посетивших торговый центр за день
+    //   .reduceSum(function(d) {
+    //   return +d.customers_cnt;
+    // });
+
+  });
 
   function getMinMaxDate(data) {
     return d3.extent(data, function(d) { 
@@ -162,8 +245,8 @@
   // функция преобразования форматов данных
   function preParceDann(dateColumn, dateFormat, usedNumColumns, data){
     var parse = d3.time.format(dateFormat).parse;
-		data.forEach(function(d) {
-      d.dt += '-' + d.hour;
+    data.forEach(function(d) {
+      d.hour ? d.dt += '-' + d.hour : null;
 	    d[dateColumn] = parse(d[dateColumn]);
 	    for (var i = 0, len = usedNumColumns.length; i < len; i += 1) {
 	          d[usedNumColumns[i]] = +d[usedNumColumns[i]];
