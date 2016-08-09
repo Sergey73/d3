@@ -214,28 +214,6 @@
     dc.renderAll();
   });
   
-  // Отображение географии проживания и работы посетителей по каждому ТЦ в виде тепловой карты
-  d3.csv("./data/geoLivingWorking.csv", function(error, data) { 
-    preParceDann("dt","%Y-%m-%d",['zid_oktmo','gender', 'age', 'customers_cnt_home', 'customers_cnt_work'], data);
-
-    // преобразование данных с попошью библиотеки crossfilter
-    var geoDataCross = crossfilter(data);
-    var allGeoData = geoDataCross.groupAll();
-    
-    var dataByRegion = geoDataCross.dimension(function(d) { return d.zid_oktmo;}); 
-    // var geoHimki = dataByShops.filter('Himki');
-    var regionGroup = dataByRegion.group();
-    debugger
-
-    // // создаем группы по дням
-    // var daysGroup = dateByDay.group(d3.time.day)
-    // // считаем количество людей посетивших торговый центр за день
-    //   .reduceSum(function(d) {
-    //   return +d.customers_cnt;
-    // });
-
-  });
-
   function getMinMaxDate(data) {
     return d3.extent(data, function(d) { 
       return d.dt; 

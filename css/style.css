@@ -8,8 +8,15 @@ body {
 	bottom:0;
 	width:100%;
 	height: 100%;
-	display: none;
+	/* display: none; */
 }
+
+.legend {
+	position: absolute;
+	bottom: 0;
+	background-color: yellow;
+}
+
 .dc-chart text {
   font-size: 12px;
 }
@@ -28,6 +35,7 @@ body {
     shape-rendering: crispEdges;
 } */
 .container {
+	display: none;
 	position: absolute;
 	text-align: center;
 	background-color: rgba(1,1,1,0.1);

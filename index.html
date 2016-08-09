@@ -8,15 +8,17 @@
 		<script src="https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.js"></script>
 		<link href="https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.css" rel="stylesheet" />
 		<script src="./js/d3.js"></script>
+		<script src="http://d3js.org/topojson.v1.min.js"></script>
+		<script src="https://d3js.org/d3-queue.v3.min.js"></script>
 		<script src="./js/crossfilter.min.js"></script>
 		<script src="./js/dc.min.js"></script>
-		<script src="./js/filters.js"></script>
 		<link rel="stylesheet" href="./css/style.css">
 		<link rel="stylesheet" href="./css/dc.min.css">
 	</head>
 	<body>
 		<div id="map"></div>
-
+		<div class="legend"></div>
+		
 		<div class="container">
 			<div> Количество людей посетивших ТР за месяц: 
 				<span>
@@ -34,7 +36,7 @@
 		  </div>
 			
 			<div>
-				<span>График посещения ТРЦ Мега Химки!!</span>
+				<span>График посещения ТРЦ Мега Химки!!!</span>
 			</div>
 			
 			<div id="sexChart">
