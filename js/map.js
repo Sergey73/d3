@@ -10,29 +10,13 @@
   d3.queue()
     .defer(d3.json, "/data/moscow.json")
     .await(ready);
-  var container = map.getContainer();
-  var svg = d3.select(container).append('svg');
-  var path = d3.geo.path()
-    .projection(function(lonlat, i) {
-      var p = map.project(new mapboxgl.LngLat(lonlat[0], lonlat[1]))
-      return [p.x, p.y];
-    });
 
-// https://bl.ocks.org/enjalot/150458d97035ab7663ee
   function ready(error, map) {
     if (error) return console.dir(error);
 
     var moscowData = topojson.feature(map, map.objects.moscowAfterSimplify);
-    var buffered = buffer(moscowData, -0.0005, 'degrees')
-    // layer.addData(moscowData);
-    var land = svg.append("path")
-        .datum(buffered)
-        .attr("class", "land")
-        .attr("d", path);
-    function render() {   
-      land.attr("d", path);
-    }
-    render();
+    layer.addData(moscowData);
+
     // layer.eachLayer(function(e){
     // })
     createLegend();
