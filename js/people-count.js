@@ -9,7 +9,7 @@
 
     // тк значения данных приходят в строковом виде, преобразуем соответствующие 
     // значения полей в числа и даду  
-    preParceDann("dt","%Y-%m-%d-%H",["age", "customers_cnt", "gender", "hour"], data);
+    preParceData("dt","%Y-%m-%d-%H",["age", "customers_cnt", "gender", "hour"], data);
 
     // разбиваем данные на категории по торговым центрам
     var dataGroup = d3.nest()
@@ -221,7 +221,7 @@
   }
 
   // функция преобразования форматов данных
-  function preParceDann(dateColumn, dateFormat, usedNumColumns, data){
+  function preParceData(dateColumn, dateFormat, usedNumColumns, data){
     var parse = d3.time.format(dateFormat).parse;
     data.forEach(function(d) {
       d.hour ? d.dt += '-' + d.hour : null;
