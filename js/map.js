@@ -4,24 +4,32 @@
   var map = L.mapbox.map('map', 'mapbox.dark')
     .setView([55.87685, 37.43729], 11);
 
+  // данные по ТЦ
+  var shopsData = [
+    {coords: [55.823328, 37.496942], title: 'ТРЦ Метрополис'},
+    {coords: [55.911161, 37.396753], title: 'ТРЦ Мега Химки'},
+    {coords: [55.809588, 37.464794], title: 'ТРЦ Щука'}
+  ];
+
   // color reference from color brewer
     mapBrew = ['rgb(255,255,204)','rgb(217,240,163)','rgb(173,221,142)','rgb(120,198,121)','rgb(65,171,93)','rgb(35,132,67)','rgb(0,90,50)'],
     // population density range used for choropleth and legend
     mapRange = [ 5000, 1000, 800, 500, 300, 100, 0 ]; 
 
   // map legend for population density
-  var legend = L.mapbox.legendControl( { position: "bottomleft" } ).addLegend( getLegendHTML() ).addTo(map);
-    // popup for displaying state census details
+  var legend = L.mapbox.legendControl( { position: 'bottomleft' } ).addLegend( getLegendHTML() ).addTo(map);
+  
+  // popup с данными о регионе
   var popup = new L.Popup({ autoPan: false, className: 'statsPopup' });
     // layer for each state feature from geojson
   var closeTooltip;
 
   // добавляем регионы на карту
-  var layer = L.geoJson(null, {
+  var regionLayer = L.geoJson(null, {
     style: getStyle,
     onEachFeature: onEachFeature
   });
-  map.addLayer(layer);
+  map.addLayer(regionLayer);
 
   // стиль регионов
   function getStyle(feature) {
@@ -30,7 +38,7 @@
       opacity: 0.1,
       color: 'black',
       fillOpacity: 0.85,
-      fillColor: getDensityColor(feature.properties.people.home)
+      fillColor: getDensityColor(feature.properties.himkiPeople.home)
     };
   }
 
@@ -50,20 +58,56 @@
 
   function onEachFeature(feature, layer) {
     layer.on({
-      mousemove: mousemove
-      // mouseout: mouseout,
+      mousemove: mousemove,
+      mouseout: mouseout
       //click: zoomToFeature
     });
   }
 
+  // показываем popup с данными региона
   function mousemove(e) {    
     var layer = e.target;
+
+    // данные для popup
+    var popupData = {
+      regionName: e.target.feature.properties.name,
+      peopleHome: e.target.feature.properties.himkiPeople.home,
+      peopleWork: e.target.feature.properties.himkiPeople.work
+    };
+
+    // устанавливаем координаты относительно которых быдет открыт popup
+    popup.setLatLng(e.latlng);
+
+    var popContent = L.mapbox.template(d3.select('#popup-template').text(), popupData);
+    popup.setContent(popContent);
+
+    if (!popup._map) popup.openOn(map);
+    window.clearTimeout(closeTooltip);
+
+    // highlight feature
+    layer.setStyle({
+      weight: 2,
+      opacity: 0.3,
+      fillOpacity: 1
+    });
+
+    if (!L.Browser.ie && !L.Browser.opera) {
+      layer.bringToFront();
+    }
   }
 
+  //закрываем popup
+  function mouseout(e) {
+    regionLayer.resetStyle(e.target);
+    closeTooltip = window.setTimeout(function() {
+      // ref: https://www.mapbox.com/mapbox.js/api/v2.1.6/l-map-class/
+      map.closePopup( popup ); // close only the state details popup
+    }, 100);
+  }
 
   // загружаем данные
   d3.queue()
-    .defer(d3.json, "/data/moscow.json")
+    .defer(d3.json, '/data/moscow.json')
     .await(ready);
 
   function ready(error, map) {
@@ -75,8 +119,8 @@
     // createLegend();
 
     // Отображение географии проживания и работы посетителей по каждому ТЦ в виде тепловой карты
-    d3.csv("./data/geoLivingWorkingMos.csv", function(error, data) { 
-      preParceData("dt","%Y-%m-%d",['zid_oktmo','gender', 'age', 'customers_cnt_home', 'customers_cnt_work'], data);
+    d3.csv('./data/geoLivingWorkingMos.csv', function(error, data) { 
+      preParceData('dt','%Y-%m-%d',['zid_oktmo','gender', 'age', 'customers_cnt_home', 'customers_cnt_work'], data);
 
       // преобразование данных с попошью библиотеки crossfilter
       var geoDataCross = crossfilter(data);
@@ -131,10 +175,10 @@
       moscowData.forEach(function (regionData) {
         var region = regionData.properties;
         var code = region.oktmoCode;
-        region['people'] = himkiObj[region.oktmoCode];
+        region['himkiPeople'] = himkiObj[region.oktmoCode];
       });
 
-      layer.addData(moscowData);
+      regionLayer.addData(moscowData);
 
       // // создаем группы по дням
       // var daysGroup = dateByDay.group(d3.time.day)
@@ -166,31 +210,54 @@
 
   // function createLegend () {
   //   var CLASS_COUNT = 10;
-  //   var startColor = "white";
-  //   var endColor = "red";
+  //   var startColor = 'white';
+  //   var endColor = 'red';
   //   var gradient = d3.interpolateRgb(startColor, endColor);
-  //   var svg = d3.select(".legend").append('svg')
+  //   var svg = d3.select('.legend').append('svg')
   //     .attr('width', '100')
   //     .attr('heigth', '200');
   // }
 
-  // markers
-  var metropolis = createMarker({coords: [37.496942, 55.823328], title: 'ТРЦ Метрополис'}).addTo(map);
-  var himki = createMarker({coords: [37.396753, 55.911161], title: 'ТРЦ Мега Химки'}).addTo(map);
-  var shuka = createMarker({coords: [37.464794, 55.809588], title: 'ТРЦ Щука'}).addTo(map);
-  // end markers
 
-  function createMarker (obj) {
-    return L.mapbox.featureLayer({
+  // добавление торговых центров
+  createShopMarker(shopsData);
+
+  function createShopMarker (shops) {
+    var shopsGeoJson = shops.map(function (shop) {
+      return {
         type: 'Feature',
         geometry: {
-            type: 'Point',
-            coordinates: obj.coords
+          type: 'Point',
+          coordinates: shop.coords.reverse()
         },
         properties: {
-            title: obj.title,
-            'marker-color': '#f86767'
+          title: shop.title,
+          'marker-color': '#ffb90f',
+          'data': 'данные ТЦ',
+          'marker-symbol': 'shop',
+          'marker-size': 'large'
         }
+      };
+    });
+
+    // добавили слой с торговыми центрами
+    shopLayer = L.mapbox.featureLayer( shopsGeoJson ).addTo( map );
+
+    // показываем название ТЦ при наведении
+    shopLayer.on('mouseover', function(e) {      
+      e.layer.openPopup();
+    });
+    
+    shopLayer.on('mouseout', function(e) {
+      e.layer.closePopup();
+    });
+
+    // при клике выбираем тц
+    shopLayer.on('click', function(e) {    
+      e.layer.feature.properties['marker-color'] = '#f5f5f5';
+      // e.target.options.style({'marker-color': 'red'})
+      e.layer.setIcon(L.mapbox.marker.icon( e.layer.feature.properties));
+
     });
   }
 
@@ -205,7 +272,7 @@
     });
   }
 
-  map.on('click', function(e) {
-    alert(e.latlng);
-  });
+  // map.on('click', function(e) {
+  //   alert(e.latlng);
+  // });
 })();
