@@ -1,68 +1,68 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset=utf-8 />
-		<title>A simple map</title>
-		<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-		<script src="http://localhost:35729/livereload.js?snipver=l"></script>
-		<script src="https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.js"></script>
-		<link href="https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.css" rel="stylesheet" />
-		<!-- <script src='https://api.mapbox.com/mapbox.js/plugins/turf/v2.0.2/turf.min.js'></script> -->
-		<script src="./js/d3.js"></script>
-		<script src="http://d3js.org/topojson.v1.min.js"></script>
-		<script src="https://d3js.org/d3-queue.v3.min.js"></script>
-		<script src="./js/crossfilter.min.js"></script>
-		<script src="./js/dc.min.js"></script>
-		<link rel="stylesheet" href="./css/dc.min.css">
-		<link rel="stylesheet" href="./css/style.css">
-	</head>
-	<body>
-		<div id="map"></div>
-		<div class="legend"></div>
+  <head>
+  <meta charset=utf-8 />
+  <title>A simple map</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="http://localhost:35729/livereload.js?snipver=l"></script>
+  <script src="https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.js"></script>
+  <link href="https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.css" rel="stylesheet" />
+  <!-- <script src='https://api.mapbox.com/mapbox.js/plugins/turf/v2.0.2/turf.min.js'></script> -->
+  <script src="./js/d3.js"></script>
+  <script src="http://d3js.org/topojson.v1.min.js"></script>
+  <script src="https://d3js.org/d3-queue.v3.min.js"></script>
+  <script src="./js/crossfilter.min.js"></script>
+  <script src="./js/dc.min.js"></script>
+  <link rel="stylesheet" href="./css/dc.min.css">
+  <link rel="stylesheet" href="./css/style.css">
+  </head>
+  <body>
+  <div id="map"></div>
+  <div class="legend"></div>
 
-		<div class="container">
-			<div> Количество людей посетивших ТР за месяц: 
-				<span>
-					<spnan id="total"></span>
-					человек. 
-				</span>
-			</div>
+  <div class="container">
+    <div> Количество людей посетивших ТР за месяц: 
+    <span>
+      <spnan id="total"></span>
+      человек. 
+    </span>
+    </div>
 
-			<div class="dc-data-count">
-	      <span>
-	        <span class="filter-count"></span>
-	      	человека за период 
-	        <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
-	      </span>
-		  </div>
-			
-			<div>
-				<span>График посещения ТРЦ Мега Химки!!!</span>
-			</div>
-			
-			<div id="sexChart">
-			</div>
+    <div class="dc-data-count">
+    <span>
+    <span class="filter-count"></span>
+    человека за период 
+    <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
+    </span>
+    </div>
+    
+    <div>
+    <span>График посещения ТРЦ Мега Химки!!!</span>
+    </div>
+    
+    <div id="sexChart">
+    </div>
 
-			<div id="ageChart">
-			</div>
+    <div id="ageChart">
+    </div>
 
-			<div id="peopleCount">
-				<div class=".dc-data-count">
-					<span class="filter-count"></span>
-					<span class="total-count"></span>
-				</div>
-				<div class="reset">
-					<span class="filter"></span>
-				</div>
-			</div>
+    <div id="peopleCount">
+    <div class=".dc-data-count">
+      <span class="filter-count"></span>
+      <span class="total-count"></span>
+    </div>
+    <div class="reset">
+      <span class="filter"></span>
+    </div>
+    </div>
 
-		</div>
-		<script id="popup-template" type="text/template">
-		  <h2>{{regionName}}</h2>
-		  <strong>Живут: </strong>{{peopleHome}} <br>
-		  <strong>Работают: </strong>{{peopleWork}} <br>
-		</script>
-		<script src="./js/map.js"></script>
-		<script src="./js/people-count.js"></script>
-	</body>
+  </div>
+  <script id="popup-template" type="text/template">
+    <h2>{{regionName}}</h2>
+    <strong>Живут: </strong>{{peopleHome}} <br>
+    <strong>Работают: </strong>{{peopleWork}} <br>
+  </script>
+  <script src="./js/map.js"></script>
+  <script src="./js/people-count.js"></script>
+  </body>
 </html>

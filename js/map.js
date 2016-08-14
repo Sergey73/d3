@@ -11,10 +11,10 @@
     {coords: [55.809588, 37.464794], title: 'ТРЦ Щука'}
   ];
 
-  // color reference from color brewer
-    mapBrew = ['rgb(255,255,204)','rgb(217,240,163)','rgb(173,221,142)','rgb(120,198,121)','rgb(65,171,93)','rgb(35,132,67)','rgb(0,90,50)'],
-    // population density range used for choropleth and legend
-    mapRange = [ 5000, 1000, 800, 500, 300, 100, 0 ]; 
+  // цвет численности людей
+  mapBrew = ['rgb(255,255,204)','rgb(217,240,163)','rgb(173,221,142)','rgb(120,198,121)','rgb(65,171,93)','rgb(35,132,67)','rgb(0,90,50)'],
+  // диапазон плотности людей для легенды
+  mapRange = [ 5000, 1000, 800, 500, 300, 100, 0 ]; 
 
   // map legend for population density
   var legend = L.mapbox.legendControl( { position: 'bottomleft' } ).addLegend( getLegendHTML() ).addTo(map);
@@ -84,7 +84,7 @@
     if (!popup._map) popup.openOn(map);
     window.clearTimeout(closeTooltip);
 
-    // highlight feature
+    // стиль при наведении
     layer.setStyle({
       weight: 2,
       opacity: 0.3,
@@ -100,12 +100,11 @@
   function mouseout(e) {
     regionLayer.resetStyle(e.target);
     closeTooltip = window.setTimeout(function() {
-      // ref: https://www.mapbox.com/mapbox.js/api/v2.1.6/l-map-class/
       map.closePopup( popup ); // close only the state details popup
     }, 100);
   }
 
-  // загружаем данные
+  // загружаем данные о регионах 
   d3.queue()
     .defer(d3.json, '/data/moscow.json')
     .await(ready);
@@ -141,7 +140,6 @@
         return result;
       }
 
-
       var himkiObj = getSumPeopleByOktmo(himkiData);
       
       function getSumPeopleByOktmo (data) {
@@ -165,11 +163,15 @@
         return sumPeople;
       }
 
-      // максимальное значение в регионе 
-      var a = 0;
+      // максимальное значение проживающих в одном регионе 
+      var h = 0;
+      var w = 0;
       for(key in himkiObj) {
-        himkiObj[key].home > a ? a = himkiObj[key].home : null 
+        himkiObj[key].home > h ? h = himkiObj[key].home : null 
+        himkiObj[key].home > w ? w = himkiObj[key].work : null 
       }
+      console.log(`максимально прроживают: ` + h)
+      console.log(`максимально работают: ` + w)
       // end
 
       moscowData.forEach(function (regionData) {
@@ -205,7 +207,7 @@
         from + (to ? '&ndash;' + to : '+'));
     }
 
-    return '<span>People per square km</span><br>' + labels.join('<br>');
+    return '<span>Количество людей</span><br>' + labels.join('<br>');
   }
 
   // function createLegend () {
@@ -232,16 +234,16 @@
         },
         properties: {
           title: shop.title,
-          'marker-color': '#ffb90f',
+          'marker-color': '#f5f5f5',
           'data': 'данные ТЦ',
           'marker-symbol': 'shop',
-          'marker-size': 'large'
+          'marker-size': 'small'
         }
       };
     });
 
     // добавили слой с торговыми центрами
-    shopLayer = L.mapbox.featureLayer( shopsGeoJson ).addTo( map );
+    shopLayer = L.mapbox.featureLayer(shopsGeoJson).addTo(map);
 
     // показываем название ТЦ при наведении
     shopLayer.on('mouseover', function(e) {      
@@ -254,15 +256,37 @@
 
     // при клике выбираем тц
     shopLayer.on('click', function(e) {    
-      e.layer.feature.properties['marker-color'] = '#f5f5f5';
-      // e.target.options.style({'marker-color': 'red'})
-      e.layer.setIcon(L.mapbox.marker.icon( e.layer.feature.properties));
+      var that = this;
+      var defaultMarkerObj = {
+        'marker-color':'#f5f5f5',
+        'marker-size':'small'
+      };
 
+      for(marker in that._layers ) {
+        var layer = that._layers[marker];
+        if(layer.feature.properties['marker-size'] != 'small') { 
+          _setMarkerStyle(layer, defaultMarkerObj);
+        }
+      }
+      
+      // устанавливаем стиль выбранного маркера
+      var selectMarkerObj = {
+        'marker-color':'#ffb90f',
+        'marker-size':'large'
+      };
+      _setMarkerStyle(e.layer, selectMarkerObj);
     });
   }
 
-    // функция преобразования форматов данных
-  function preParceData(dateColumn, dateFormat, usedNumColumns, data){
+  function _setMarkerStyle (markerLayer, stylesObj) {
+    for(key in stylesObj) {
+      markerLayer.feature.properties[key] = stylesObj[key];
+    }
+    markerLayer.setIcon(L.mapbox.marker.icon( markerLayer.feature.properties));
+  }
+
+  // функция преобразования форматов данных
+  function preParceData(dateColumn, dateFormat, usedNumColumns, data) {
     var parse = d3.time.format(dateFormat).parse;
     data.forEach(function(d) {
       d[dateColumn] = parse(d[dateColumn]);
