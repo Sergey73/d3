@@ -7,6 +7,7 @@
     popup,
     createdLayer,
     shopsData,
+    selectedShop,
     moscowData,
     regionLayer;
 
@@ -20,9 +21,9 @@
 
     // данные по ТЦ
     shopsData = [
-      {coords: [55.823328, 37.496942], title: 'ТРЦ Метрополис'},
-      {coords: [55.911161, 37.396753], title: 'ТРЦ Мега Химки'},
-      {coords: [55.809588, 37.464794], title: 'ТРЦ Щука'}
+      {coords: [55.911161, 37.396753], title: 'ТРЦ Мега Химки', name: 'himki'},
+      {coords: [55.823328, 37.496942], title: 'ТРЦ Метрополис', name: 'metropolis'},
+      {coords: [55.809588, 37.464794], title: 'ТРЦ Щука', name: 'shuka'}
     ];
 
     // цвет численности людей
@@ -47,6 +48,10 @@
 
     // значение по умолчанию  отображения географии людей
     createdLayer = 'home';
+
+    // ТЦ по умолчанию 
+    selectedShop = 'himki';
+
     createGeoJsonLayer();
 
     // загружаем данные о регионах 
@@ -54,6 +59,8 @@
       .defer(d3.json, '/data/moscow.json')
       .await(ready);
 
+    // добавление торговых центров на карту
+    createShopMarker(shopsData);
     setEventOnRegionLayer();
   }
 
@@ -64,8 +71,6 @@
       onEachFeature: onEachFeature
     });
     map.addLayer(regionLayer);
-    // добавление торговых центров на карту
-    createShopMarker(shopsData);
   }
 
   function setEventOnRegionLayer() {
@@ -73,10 +78,14 @@
       .on("change", function() {
         var elem = d3.select(this);
         createdLayer = elem.property("value");
-        map.removeLayer(regionLayer);
-        createGeoJsonLayer();
-        regionLayer.addData(moscowData);
+        updateLayer();
       });
+  }
+
+  function updateLayer () {
+    map.removeLayer(regionLayer);
+    createGeoJsonLayer();
+    regionLayer.addData(moscowData);
   }
 
   // стиль регионов
@@ -86,7 +95,7 @@
       opacity: 0.1,
       color: 'black',
       fillOpacity: 0.85,
-      fillColor: getDensityColor(feature.properties.himkiPeople[createdLayer])
+      fillColor: getDensityColor(feature.properties[selectedShop][createdLayer])
     };
   }
 
@@ -118,8 +127,8 @@
     // данные для popup
     var popupData = {
       regionName: e.target.feature.properties.name,
-      peopleHome: e.target.feature.properties.himkiPeople.home,
-      peopleWork: e.target.feature.properties.himkiPeople.work
+      peopleHome: e.target.feature.properties[selectedShop].home,
+      peopleWork: e.target.feature.properties[selectedShop].work
     };
 
     // устанавливаем координаты относительно которых быдет открыт popup
@@ -183,6 +192,8 @@
       }
 
       var himkiObj = getSumPeopleByOktmo(himkiData);
+      var metropolisObj = getSumPeopleByOktmo(metropolisData);
+      var shukaObj = getSumPeopleByOktmo(shukaData);
       
       function getSumPeopleByOktmo (data) {
         var sumPeople = {};
@@ -220,7 +231,9 @@
       moscowData.forEach(function (regionData) {
         var region = regionData.properties;
         var code = region.oktmoCode;
-        region['himkiPeople'] = himkiObj[region.oktmoCode];
+        region['himki'] = himkiObj[region.oktmoCode];
+        region['metropolis'] = metropolisObj[region.oktmoCode];
+        region['shuka'] = shukaObj[region.oktmoCode];
       });
 
       regionLayer.addData(moscowData);
@@ -258,19 +271,26 @@
 
   function createShopMarker (shops) {
     var shopsGeoJson = shops.map(function (shop) {
+      var propObj = {
+        title: shop.title,
+        'marker-color': '#f5f5f5',
+        'name': shop.name,
+        'marker-symbol': 'shop',
+        'marker-size': 'small'
+      };
+      
+      if( shop.name == selectedShop) {
+        propObj['marker-size'] = 'large',
+        propObj['marker-color'] = '#ffb90f'
+      }
+
       return {
         type: 'Feature',
         geometry: {
           type: 'Point',
           coordinates: shop.coords.reverse()
         },
-        properties: {
-          title: shop.title,
-          'marker-color': '#f5f5f5',
-          'data': 'данные ТЦ',
-          'marker-symbol': 'shop',
-          'marker-size': 'small'
-        }
+        properties: propObj
       };
     });
 
@@ -289,28 +309,32 @@
     // при клике выбираем тц
     shopLayer.on('click', function(e) {    
       var that = this;
-      var defaultMarkerObj = {
+      // стиль выбранного маркера
+      var defaultMarkerStyle = {
         'marker-color':'#f5f5f5',
         'marker-size':'small'
+      };
+
+      // стиль выбранного маркера
+      var selectMarkerStyle = {
+        'marker-color': '#ffb90f',
+        'marker-size': 'large'
       };
 
       for(marker in that._layers ) {
         var layer = that._layers[marker];
         if(layer.feature.properties['marker-size'] != 'small') { 
-          _setMarkerStyle(layer, defaultMarkerObj);
+          setMarkerStyle(layer, defaultMarkerStyle);
         }
       }
       
-      // устанавливаем стиль выбранного маркера
-      var selectMarkerObj = {
-        'marker-color':'#ffb90f',
-        'marker-size':'large'
-      };
-      _setMarkerStyle(e.layer, selectMarkerObj);
+      setMarkerStyle(e.layer, selectMarkerStyle);
+      selectedShop = e.layer.feature.properties.name;
+      updateLayer();
     });
   }
 
-  function _setMarkerStyle (markerLayer, stylesObj) {
+  function setMarkerStyle (markerLayer, stylesObj) {
     for(key in stylesObj) {
       markerLayer.feature.properties[key] = stylesObj[key];
     }
