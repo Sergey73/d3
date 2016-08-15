@@ -8,7 +8,6 @@
     createdLayer,
     shopsData,
     selectedShop,
-    moscowData,
     regionLayer;
 
   init();
@@ -52,20 +51,19 @@
     // ТЦ по умолчанию 
     selectedShop = 'himki';
 
+    // добавляем слой для регионов
     createGeoJsonLayer();
 
-    // загружаем данные о регионах 
-    d3.queue()
-      .defer(d3.json, '/data/moscow.json')
-      .await(ready);
+    // создаем регионы 
+    Region.createRegions(regionLayer);
 
-    // добавление торговых центров на карту
+    // добавление маркеров ТЦ на карту
     createShopMarker(shopsData);
     setEventOnRegionLayer();
   }
 
   function createGeoJsonLayer () {
-     // добавляем регионы на карту
+    // создаем слой для регионов
     regionLayer = L.geoJson(null, {
       style: getStyle,
       onEachFeature: onEachFeature
@@ -85,7 +83,7 @@
   function updateLayer () {
     map.removeLayer(regionLayer);
     createGeoJsonLayer();
-    regionLayer.addData(moscowData);
+    Region.createRegions(regionLayer);
   }
 
   // стиль регионов
@@ -160,86 +158,7 @@
     }, 100);
   }
 
-  function ready(error, map) {
-    if (error) return console.dir(error);
-    moscowData = topojson.feature(map, map.objects.moscowAfterSimplify).features;
-
-    // layer.eachLayer(function(e){
-    // })
-    // createLegend();
-
-    // Отображение географии проживания и работы посетителей по каждому ТЦ в виде тепловой карты
-    d3.csv('./data/geoLivingWorkingMos.csv', function(error, data) { 
-      preParceData('dt','%Y-%m-%d',['zid_oktmo','gender', 'age', 'customers_cnt_home', 'customers_cnt_work'], data);
-
-      // преобразование данных с попошью библиотеки crossfilter
-      var geoDataCross = crossfilter(data);
-      var allGeoData = geoDataCross.groupAll();
-      
-      // dimension по торговым центрам
-      var dataByRegion = geoDataCross.dimension(function(d) { return d.tid;}); 
-
-      // создаем данные по ТЦ
-      var himkiData = createShopArr(dataByRegion, 'Himki');
-      var metropolisData = createShopArr(dataByRegion, 'Metropolis');
-      var shukaData = createShopArr(dataByRegion, 'Shuka');
-      
-      function createShopArr(dimensionData, shop) {
-        dimensionData.filter(shop);
-        var result = dataByRegion.top(Infinity);
-        dimensionData.filter(null);
-        return result;
-      }
-
-      var himkiObj = getSumPeopleByOktmo(himkiData);
-      var metropolisObj = getSumPeopleByOktmo(metropolisData);
-      var shukaObj = getSumPeopleByOktmo(shukaData);
-      
-      function getSumPeopleByOktmo (data) {
-        var sumPeople = {};
-        var shopCross = crossfilter(data);
-        var allShopData = geoDataCross.groupAll();
-
-        var dataByRegion = shopCross.dimension(function(d) { return d.zid_oktmo;});
-        var regionGroup = dataByRegion.group()
-          .reduceSum(function(d){
-            if (!sumPeople[d.zid_oktmo]) {
-              sumPeople[d.zid_oktmo] = { work: 0, home: 0 };
-            } 
-            sumPeople[d.zid_oktmo]['home'] += d.customers_cnt_home;
-            sumPeople[d.zid_oktmo]['work'] += d.customers_cnt_work;
-
-            return +d.customers_cnt_home;
-          });
-          // вызвать, иначе reduceSum не сработает
-          regionGroup.top(1);
-        return sumPeople;
-      }
-
-      // максимальное значение проживающих в одном регионе 
-      var h = 0;
-      var w = 0;
-      for(key in himkiObj) {
-        himkiObj[key].home > h ? h = himkiObj[key].home : null 
-        himkiObj[key].home > w ? w = himkiObj[key].work : null 
-      }
-      console.log(`максимально прроживают: ` + h)
-      console.log(`максимально работают: ` + w)
-      // end
-
-      // добавляем данные о проживании и работе людей к геоданным 
-      moscowData.forEach(function (regionData) {
-        var region = regionData.properties;
-        var code = region.oktmoCode;
-        region['himki'] = himkiObj[region.oktmoCode];
-        region['metropolis'] = metropolisObj[region.oktmoCode];
-        region['shuka'] = shukaObj[region.oktmoCode];
-      });
-
-      regionLayer.addData(moscowData);
-    });
-  }
-
+  // создаем легенду
   function createLegend() {
     var grades = [].slice.call(mapRange).reverse(), // creates a copy of ranges and reverses it
       labels = [],
@@ -259,18 +178,10 @@
     return '<span><b>Плотность населеня :</span></b><br>' + labels.join('<br>');
   }
 
-  // function createLegend () {
-  //   var CLASS_COUNT = 10;
-  //   var startColor = 'white';
-  //   var endColor = 'red';
-  //   var gradient = d3.interpolateRgb(startColor, endColor);
-  //   var svg = d3.select('.legend').append('svg')
-  //     .attr('width', '100')
-  //     .attr('heigth', '200');
-  // }
-
+  // создаем маркеры ТЦ
   function createShopMarker (shops) {
     var shopsGeoJson = shops.map(function (shop) {
+      // стиль не выбранного маркера 
       var propObj = {
         title: shop.title,
         'marker-color': '#f5f5f5',
@@ -279,6 +190,7 @@
         'marker-size': 'small'
       };
       
+      // стиль выбранного маркера
       if( shop.name == selectedShop) {
         propObj['marker-size'] = 'large',
         propObj['marker-color'] = '#ffb90f'
@@ -294,7 +206,7 @@
       };
     });
 
-    // добавили слой с торговыми центрами
+    // добавляем слой с ТЦ 
     var shopLayer = L.mapbox.featureLayer(shopsGeoJson).addTo(map);
 
     // показываем название ТЦ при наведении
@@ -306,7 +218,8 @@
       e.layer.closePopup();
     });
 
-    // при клике выбираем тц
+    // при клике на маркер ТЦ задаем задаем ему стиль и 
+    // отображаем данные выбранного ТЦ
     shopLayer.on('click', function(e) {    
       var that = this;
       // стиль выбранного маркера
@@ -341,18 +254,4 @@
     markerLayer.setIcon(L.mapbox.marker.icon( markerLayer.feature.properties));
   }
 
-  // функция преобразования форматов данных
-  function preParceData(dateColumn, dateFormat, usedNumColumns, data) {
-    var parse = d3.time.format(dateFormat).parse;
-    data.forEach(function(d) {
-      d[dateColumn] = parse(d[dateColumn]);
-      for (var i = 0, len = usedNumColumns.length; i < len; i += 1) {
-            d[usedNumColumns[i]] = +d[usedNumColumns[i]];
-      }
-    });
-  }
-
-  // map.on('click', function(e) {
-  //   alert(e.latlng);
-  // });
-})();
+})(Region);
