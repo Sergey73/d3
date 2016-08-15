@@ -44,3 +44,25 @@ body {
 	width:100%;
 	bottom: 20px;
 }
+
+.filterHomeWork {
+  background: #fff;
+  position:absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 100;
+  padding: 10px;
+  border: thin solid grey;
+  border-radius:3px;
+  font: 12px/20px 'Helvetica Neue',Arial,Helvetica,sans-serif;
+  color: rgba(0,0,0,.75);
+}
+
+.filterHomeWork p { 
+	margin: 0;
+}
+
+.filterHomeWork label {
+	cursor: pointer;
+	display: block;
+}

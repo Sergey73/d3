@@ -1,35 +1,83 @@
 (function () {
-  L.mapbox.accessToken = 'pk.eyJ1Ijoic2VyZ2V5NzMiLCJhIjoiY2lyM3JhYnAxMDAyeGh5bnFmczh3cTRseiJ9.KVe54Q2NCigy3J0j3didAA';
-  // подложка mapbox
-  var map = L.mapbox.map('map', 'mapbox.dark')
-    .setView([55.87685, 37.43729], 11);
+  var legend, 
+    map,
+    closeTooltip,
+    mapRange,
+    mapBrew,
+    popup,
+    createdLayer,
+    shopsData,
+    moscowData,
+    regionLayer;
 
-  // данные по ТЦ
-  var shopsData = [
-    {coords: [55.823328, 37.496942], title: 'ТРЦ Метрополис'},
-    {coords: [55.911161, 37.396753], title: 'ТРЦ Мега Химки'},
-    {coords: [55.809588, 37.464794], title: 'ТРЦ Щука'}
-  ];
+  init();
 
-  // цвет численности людей
-  mapBrew = ['rgb(255,255,204)','rgb(217,240,163)','rgb(173,221,142)','rgb(120,198,121)','rgb(65,171,93)','rgb(35,132,67)','rgb(0,90,50)'],
-  // диапазон плотности людей для легенды
-  mapRange = [ 5000, 1000, 800, 500, 300, 100, 0 ]; 
+  function init () {
+    L.mapbox.accessToken = 'pk.eyJ1Ijoic2VyZ2V5NzMiLCJhIjoiY2lyM3JhYnAxMDAyeGh5bnFmczh3cTRseiJ9.KVe54Q2NCigy3J0j3didAA';
+    // подложка mapbox
+    map = L.mapbox.map('map', 'mapbox.dark')
+      .setView([55.87685, 37.43729], 11);
 
-  // map legend for population density
-  var legend = L.mapbox.legendControl( { position: 'bottomleft' } ).addLegend( getLegendHTML() ).addTo(map);
-  
-  // popup с данными о регионе
-  var popup = new L.Popup({ autoPan: false, className: 'statsPopup' });
-    // layer for each state feature from geojson
-  var closeTooltip;
+    // данные по ТЦ
+    shopsData = [
+      {coords: [55.823328, 37.496942], title: 'ТРЦ Метрополис'},
+      {coords: [55.911161, 37.396753], title: 'ТРЦ Мега Химки'},
+      {coords: [55.809588, 37.464794], title: 'ТРЦ Щука'}
+    ];
 
-  // добавляем регионы на карту
-  var regionLayer = L.geoJson(null, {
-    style: getStyle,
-    onEachFeature: onEachFeature
-  });
-  map.addLayer(regionLayer);
+    // цвет численности людей
+    mapBrew = [
+      'rgb(255,255,204)',
+      'rgb(217,240,163)',
+      'rgb(173,221,142)',
+      'rgb(120,198,121)',
+      'rgb(65,171,93)',
+      'rgb(35,132,67)',
+      'rgb(0,90,50)'
+    ],
+    
+    // диапазон плотности людей для легенды
+    mapRange = [ 5000, 1000, 800, 500, 300, 100, 0 ]; 
+
+    // легенда
+    legend = L.mapbox.legendControl({position: 'bottomleft'}).addLegend(createLegend()).addTo(map);
+    
+    // popup с данными о регионе
+    popup = new L.Popup({ autoPan: false, className: 'statsPopup' });
+
+    // значение по умолчанию  отображения географии людей
+    createdLayer = 'home';
+    createGeoJsonLayer();
+
+    // загружаем данные о регионах 
+    d3.queue()
+      .defer(d3.json, '/data/moscow.json')
+      .await(ready);
+
+    setEventOnRegionLayer();
+  }
+
+  function createGeoJsonLayer () {
+     // добавляем регионы на карту
+    regionLayer = L.geoJson(null, {
+      style: getStyle,
+      onEachFeature: onEachFeature
+    });
+    map.addLayer(regionLayer);
+    // добавление торговых центров на карту
+    createShopMarker(shopsData);
+  }
+
+  function setEventOnRegionLayer() {
+    d3.selectAll("input[type=radio][name=styleStates]")
+      .on("change", function() {
+        var elem = d3.select(this);
+        createdLayer = elem.property("value");
+        map.removeLayer(regionLayer);
+        createGeoJsonLayer();
+        regionLayer.addData(moscowData);
+      });
+  }
 
   // стиль регионов
   function getStyle(feature) {
@@ -38,11 +86,11 @@
       opacity: 0.1,
       color: 'black',
       fillOpacity: 0.85,
-      fillColor: getDensityColor(feature.properties.himkiPeople.home)
+      fillColor: getDensityColor(feature.properties.himkiPeople[createdLayer])
     };
   }
 
-  // получить цвет в зависимости от количества проживания
+  // получить цвет в зависимости от количества людей
   function getDensityColor(d) {
     var colors = [].slice.call(mapBrew).reverse(); // creates a copy of the mapBrew array and reverses it
     var range = mapRange;
@@ -60,7 +108,6 @@
     layer.on({
       mousemove: mousemove,
       mouseout: mouseout
-      //click: zoomToFeature
     });
   }
 
@@ -100,18 +147,13 @@
   function mouseout(e) {
     regionLayer.resetStyle(e.target);
     closeTooltip = window.setTimeout(function() {
-      map.closePopup( popup ); // close only the state details popup
+      map.closePopup( popup ); 
     }, 100);
   }
 
-  // загружаем данные о регионах 
-  d3.queue()
-    .defer(d3.json, '/data/moscow.json')
-    .await(ready);
-
   function ready(error, map) {
     if (error) return console.dir(error);
-    var moscowData = topojson.feature(map, map.objects.moscowAfterSimplify).features;
+    moscowData = topojson.feature(map, map.objects.moscowAfterSimplify).features;
 
     // layer.eachLayer(function(e){
     // })
@@ -174,6 +216,7 @@
       console.log(`максимально работают: ` + w)
       // end
 
+      // добавляем данные о проживании и работе людей к геоданным 
       moscowData.forEach(function (regionData) {
         var region = regionData.properties;
         var code = region.oktmoCode;
@@ -181,18 +224,11 @@
       });
 
       regionLayer.addData(moscowData);
-
-      // // создаем группы по дням
-      // var daysGroup = dateByDay.group(d3.time.day)
-      // // считаем количество людей посетивших торговый центр за день
-      //   .reduceSum(function(d) {
-      //   return +d.customers_cnt;
-      // });
     });
   }
 
-  function getLegendHTML() {
-    var grades = Array.prototype.slice.call(mapRange).reverse(), // creates a copy of ranges and reverses it
+  function createLegend() {
+    var grades = [].slice.call(mapRange).reverse(), // creates a copy of ranges and reverses it
       labels = [],
       from, to;
     // color reference from color brewer
@@ -207,7 +243,7 @@
         from + (to ? '&ndash;' + to : '+'));
     }
 
-    return '<span>Количество людей</span><br>' + labels.join('<br>');
+    return '<span><b>Плотность населеня :</span></b><br>' + labels.join('<br>');
   }
 
   // function createLegend () {
@@ -219,10 +255,6 @@
   //     .attr('width', '100')
   //     .attr('heigth', '200');
   // }
-
-
-  // добавление торговых центров
-  createShopMarker(shopsData);
 
   function createShopMarker (shops) {
     var shopsGeoJson = shops.map(function (shop) {
@@ -243,7 +275,7 @@
     });
 
     // добавили слой с торговыми центрами
-    shopLayer = L.mapbox.featureLayer(shopsGeoJson).addTo(map);
+    var shopLayer = L.mapbox.featureLayer(shopsGeoJson).addTo(map);
 
     // показываем название ТЦ при наведении
     shopLayer.on('mouseover', function(e) {      
