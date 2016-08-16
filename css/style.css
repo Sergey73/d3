@@ -37,15 +37,6 @@ body {
   fill: white;
 }
 
-.container {
-	/*display: none;*/
-	position: absolute;
-	background-color: rgba(1,1,1,1);
-	width:100%;
-	border: 1px solid red;
-	bottom: 20px;
-}
-
 .people-count {
 	position: absolute;
 	text-align: center;

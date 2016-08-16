@@ -1,10 +1,18 @@
-(function () {
-	var himki = {};
-	var metropolis = {};
-	var shuka = {};
+var Chart = (function() {
+  var selectShop, timeChart, sexChart, ageChart;
+  var shops = {
+    himki: {name: 'ТРЦ Мега Химки'}, 
+    metropolis: {name: 'ТРЦ Метрополис'},
+    shuka: {name: 'ТРЦ Щука'}
+  };
 
-  // загружаем данные
-  d3.csv("./data/visitors.csv", function(error, data) {
+  function init (shop) {
+    selectShop = shops[shop];
+    // загружаем данные
+    d3.csv("./data/visitors.csv", dataLoad);
+  }
+
+  function dataLoad(error, data) {
     if (error) throw error;
 
     // тк значения данных приходят в строковом виде, преобразуем соответствующие 
@@ -15,171 +23,120 @@
     var dataGroup = d3.nest()
           .key(function(d) { return d.tid; })
           .entries(data);      
-    dataGroup.forEach(function (shop) {
-      shop.key == "Himki" ? himki.values = shop.values :
-        shop.key == "Shuka" ? shuka.values = shop.values :
-          shop.key == "Metropolis" ? metropolis.values = shop.values : null;
+    dataGroup.forEach(function(shop) {
+      shop.key == "Himki" ? shops.himki.values = shop.values :
+        shop.key == "Shuka" ? shops.shuka.values = shop.values :
+          shop.key == "Metropolis" ? shops.metropolis.values = shop.values : null;
     });
 
     // минимальное и максимальное значение даты торговых центров
-    himki['minMaxDate'] = getMinMaxDate(himki.values);
-    metropolis['minMaxDate'] = getMinMaxDate(shuka.values);
-    shuka['minMaxDate'] = getMinMaxDate(metropolis.values);
+    shops.himki['minMaxDate'] = getMinMaxDate(shops.himki.values);
+    shops.metropolis['minMaxDate'] = getMinMaxDate(shops.shuka.values);
+    shops.shuka['minMaxDate'] = getMinMaxDate(shops.metropolis.values);
+    setShopData();
+  }
 
+  function setShopData () {
     // преобразование данных с попошью библиотеки crossfilter
-    var dataCross = crossfilter(himki.values);
+    var dataCross = crossfilter(selectShop.values);
     var all = dataCross.groupAll();
-
+    
     // общее количество людей
-    var totalPeople = all.reduceSum(function(d){
+    var totalPeople = all.reduceSum(function(d) {
       return +d.customers_cnt;
     });
 
     // всего людей за месяц
     d3.select("#total").text(totalPeople.value());
+    d3.select(".shop-name").text(selectShop.name);
 
     // вывод текста общее количество людей 
     dc.dataCount('.dc-data-count')
       .dimension(dataCross)
       .group(all);
 
+    createTimeChartData(dataCross);
+    createSexChartData(dataCross);
+    createAgeChartData(dataCross);
+  }
 
+  function rerenderCharts(chart, date, group) {
+    chart.on('renderlet', function(chart) {
+      chart.dimension(date);
+      chart.group(group);
+    });
+    dc.renderAll();
+  }
+
+  function createTimeChartData(dataCross) {
     // dimension по дате
     var dateByDay = dataCross.dimension(function(d) { return d.dt; });    
     
     // создаем группы по дням
     var daysGroup = dateByDay.group(d3.time.day)
+    
     // считаем количество людей посетивших торговый центр за день
-    // .reduce(reduceAdd, reduceRemove, reduceInitial);
       .reduceSum(function(d) {
-        return d.customers_cnt;
+        return +d.customers_cnt;
       });
-    // создаем группы по часам
-    var hoursGroup = dateByDay.group(d3.time.hour)
-    // считаем количество людей посетивших торговый центр за час
-      // .reduce(reduceAdd, reduceRemove, reduceInitial);
-
-    // function reduceAdd(p, v) {
-    //   p += v.customers_cnt;
-    //   return p;
-    // }
-
-    // function reduceRemove(p, v) {
-    //   p -= v.customers_cnt;
-    //   return p;
-    // }
-
-    // function reduceInitial() {
-    //   return 0;
-    // }
 
     // максимальное посещение в день
-    var maxPeopleInDay = d3.max(daysGroup.top(Infinity), function (d) { return d.value; });
-    // максимальное посещение за час
-    var maxPeopleInHour = d3.max(hoursGroup.top(Infinity), function (d) { return d.value; });
+    selectShop['maxPeopleInDay'] = d3.max(daysGroup.top(Infinity), function(d) { return d.value;});
+    
+    // создаем или обновляем созданные график по времени
+    timeChart ? rerenderCharts(timeChart, dateByDay, daysGroup) : createTimeChart(dateByDay, daysGroup);
+  }
 
-    // создаем график по времени 
-    var chart = dc.barChart("#peopleCount");
+  function createTimeChart(dateByDay, daysGroup) {
+    timeChart = dc.barChart("#peopleCount");
 
-    // 
-    var startData = d3.select('.dataStart');
-    var endData = d3.select('.dataEnd');
-    function x (timeArr) {
-      var formatTime = d3.time.format("%d %B %Y %H:%M:%S");
-      var start = formatTime(timeArr[0]);
-      var end = formatTime(timeArr[1]);
-      startData.text(start);
-      endData.text(end);
-    }
-
-    chart
+    timeChart
       .width(1200)
       .height(200)
-      .x(d3.time.scale([new Date(himki.minMaxDate[0]), new Date(himki.minMaxDate[1])]))
-      .y(d3.scale.linear().domain([0, maxPeopleInDay + 1000]))
-      .margins({top: 10, left: 80, right: 10, bottom: 40})
+      .x(d3.time.scale().domain([new Date(selectShop.minMaxDate[0]), new Date(selectShop.minMaxDate[1])]))
+      .y(d3.scale.linear().domain([0, selectShop.maxPeopleInDay + 5000]))
       .xUnits(d3.time.days)
+      .margins({top: 10, left: 50, right: 10, bottom: 40})
       .elasticX(true)
+      // начало координат +1 день
       .xAxisPadding(1)
       .yAxisLabel("Количество людей")
       .dimension(dateByDay)
       .group(daysGroup)
       .transitionDuration(1500)
+      .controlsUseVisibility(true)
       .colors('#ffb80d')
-      .centerBar(true)
-      .brushOn(true)
-      // .barPadding(0.5)
-      // .clipPadding(10)     
       .renderLabel(true)
-
-      // my значение
-      // .label(function(d) { 
-      //   return d.y; }
-      // )
-      // end my значение
-
-      // my обработка фильтра
       .filterHandler(function(dimension, filter) {
-        filter[0] && filter[0][0] ? x(filter[0]) : null;
-        // обработка фильтра
-        //   var newFilter = filter + 10;
-        //   dimension.filter(newFilter);
-        //   return newFilter; // set the actual filter value to the new value
-        dimension.filter(filter[0]); // perform filtering
-        return filter; // return the actual filter value
+        if (filter[0] && filter[0][0]) {
+          parseDate(filter[0]);
+          return filter; 
+        } 
       })
-      // end my обработка фильтра
-
-      .renderlet(function(chart){
+      .on('renderlet', function(chart){
         // поворот текста на 45 градусов для оси Х 
         chart.selectAll('g.x text')
           .attr('transform', 'translate(-10,10) rotate(315)');
-       
-
-        // // поворот текста для значений 
-        // chart.selectAll('.barLabel')
-        //   .attr({
-        //     'transform': 
-        //       function(d){ 
-        //       var x = this.getAttribute('x');
-        //       var y = this.getAttribute('y');
-        //       return "rotate(90," + x +"," + y + ")";
-        //     },
-        //     'x': function() {
-        //       return this.getAttribute('x') - 15;
-        //     },
-        //     'y': function() {
-        //       return +this.getAttribute('y') + 4;
-        //     }
-        // });
-
-        // smooth the rendering through event throttling
-        // dc.events.trigger(function(){
-        //     // focus some other chart to the range selected by user on this chart
-        //     chart.focus(chart.filter());
-        // });
       });
-    
+      timeChart.render();
+  }
 
-  // sex chart
-    var sexChart    = dc.pieChart("#sexChart");
+  function createSexChartData(dataCross) {
     
     // dimension по полу
     var dateByGender = dataCross.dimension(function(d) { return d.gender; });
-    
-    // my
-    // фильтруем по значению 2 (женщины)    
-    // var e =dateByGender.filter("2");
-    // считаем общее количество женщин
-    // var x = dataCross.groupAll().reduceCount().value();
-    // очищаем группу
-    // dateByGender.filterAll();
-    // end my 
 
     // делим на группы ж/м и подсчитываем общее количество каждой группы.
     var genderGroup = dateByGender.group().reduceSum(function(d) {
       return +d.customers_cnt;
     });
+
+    // создаем или обновляем созданные график по полу
+    sexChart ? rerenderCharts(sexChart, dateByGender, genderGroup) : createSexChart(dateByGender, genderGroup);
+  }
+
+  function createSexChart(dateByGender, genderGroup) {
+    sexChart = dc.pieChart("#sexChart");
 
     // цвета графика sexChart
     var colorSexChart = d3.scale.ordinal().range(['#4682b4', '#ffc0cb']);
@@ -189,7 +146,7 @@
       .height(225)
       .dimension(dateByGender)
       .group(genderGroup)
-      // внешний отступ крафика
+      // внешний отступ uрафика
       .externalRadiusPadding(10)
       // сдвиг чата по y
       .cy(105)
@@ -213,12 +170,11 @@
           result = d.value;
         }
         return result;
-      });
-  // end sex chart
+      })
+      .render();
+  }
 
-  // age chart
-    var ageChart = dc.pieChart("#ageChart");
-    
+  function createAgeChartData(dataCross) {
     // dimension по возрасту
     var dateByAge = dataCross.dimension(function(d) { return d.age; });
     
@@ -227,7 +183,15 @@
       return +d.customers_cnt;
     });
 
-    // цвета графика sexChart
+    // создаем график по возрасту
+     // создаем или обновляем созданные график по полу
+    ageChart ? rerenderCharts(ageChart, dateByAge, ageGroup) : createAgeChart(dateByAge, ageGroup);
+  }
+
+  function createAgeChart(dateByAge, ageGroup){
+    ageChart = dc.pieChart("#ageChart");
+    
+    // цвета графика ageChart
     var colorАgeChart = d3.scale.ordinal().range(['#c4af1a', '#ffa500', '#ff0000', '#a52a2a']);
 
     ageChart
@@ -243,7 +207,6 @@
       .innerRadius(30)
       .legend(dc.legend()
         .x(70).y(205)
-        // .horizontal(true)
         // размер легенды
         .itemHeight(15)
         .legendText(function(d, i) { 
@@ -275,11 +238,20 @@
       })
       .title(function(d) {
         return ;
-      });
-  // age end chart
-    dc.renderAll();
-  });
+      })
+    .render();
+  }
   
+ function parseDate(timeArr) {
+    var startData = d3.select('.dataStart');
+    var endData = d3.select('.dataEnd');
+    var formatTime = d3.time.format("%d %B %Y %H:%M:%S");
+    var start = formatTime(timeArr[0]);
+    var end = formatTime(timeArr[1]);
+    startData.text(start);
+    endData.text(end);
+  }
+
   function getMinMaxDate(data) {
     return d3.extent(data, function(d) { 
       return d.dt; 
@@ -297,5 +269,15 @@
 	    }
 	  });
 	}
-
+  
+  return {
+    createCharts: function (shop) {
+      if (!shops[shop].values) {
+        init(shop);
+      } else {
+        selectShop = shops[shop];
+        setShopData();
+      }
+    }
+  };
 })();

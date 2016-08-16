@@ -56,6 +56,7 @@
 
     // создаем регионы 
     Region.createRegions(regionLayer);
+    Chart.createCharts(selectedShop);
 
     // добавление маркеров ТЦ на карту
     createShopMarker(shopsData);
@@ -246,6 +247,7 @@
       setMarkerStyle(e.layer, selectMarkerStyle);
       selectedShop = e.layer.feature.properties.name;
       updateLayer();
+      Chart.createCharts(selectedShop);
     });
   }
 
@@ -256,4 +258,4 @@
     markerLayer.setIcon(L.mapbox.marker.icon( markerLayer.feature.properties));
   }
 
-})(Region);
+})(Region, Chart);
