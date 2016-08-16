@@ -20,6 +20,7 @@
         shop.key == "Shuka" ? shuka.values = shop.values :
           shop.key == "Metropolis" ? metropolis.values = shop.values : null;
     });
+
     // минимальное и максимальное значение даты торговых центров
     himki['minMaxDate'] = getMinMaxDate(himki.values);
     metropolis['minMaxDate'] = getMinMaxDate(shuka.values);
@@ -45,13 +46,14 @@
 
     // dimension по дате
     var dateByDay = dataCross.dimension(function(d) { return d.dt; });    
+    
     // создаем группы по дням
     var daysGroup = dateByDay.group(d3.time.day)
     // считаем количество людей посетивших торговый центр за день
-      // .reduce(reduceAdd, reduceRemove, reduceInitial);
+    // .reduce(reduceAdd, reduceRemove, reduceInitial);
       .reduceSum(function(d) {
-      return +d.customers_cnt;
-    });
+        return d.customers_cnt;
+      });
     // создаем группы по часам
     var hoursGroup = dateByDay.group(d3.time.hour)
     // считаем количество людей посетивших торговый центр за час
@@ -79,9 +81,20 @@
     // создаем график по времени 
     var chart = dc.barChart("#peopleCount");
 
+    // 
+    var startData = d3.select('.dataStart');
+    var endData = d3.select('.dataEnd');
+    function x (timeArr) {
+      var formatTime = d3.time.format("%d %B %Y %H:%M:%S");
+      var start = formatTime(timeArr[0]);
+      var end = formatTime(timeArr[1]);
+      startData.text(start);
+      endData.text(end);
+    }
+
     chart
-      .width(800)
-      .height(300)
+      .width(1200)
+      .height(200)
       .x(d3.time.scale([new Date(himki.minMaxDate[0]), new Date(himki.minMaxDate[1])]))
       .y(d3.scale.linear().domain([0, maxPeopleInDay + 1000]))
       .margins({top: 10, left: 80, right: 10, bottom: 40})
@@ -92,11 +105,11 @@
       .dimension(dateByDay)
       .group(daysGroup)
       .transitionDuration(1500)
-      .colors('red')
+      .colors('#ffb80d')
       .centerBar(true)
       .brushOn(true)
-      .barPadding(1)
-      .clipPadding(10)     
+      // .barPadding(0.5)
+      // .clipPadding(10)     
       .renderLabel(true)
 
       // my значение
@@ -106,12 +119,15 @@
       // end my значение
 
       // my обработка фильтра
-      // .filterHandler(function(dimension, filter){
-      //   // обработка фильтра
-      //   //   var newFilter = filter + 10;
-      //   //   dimension.filter(newFilter);
-      //   //   return newFilter; // set the actual filter value to the new value
-      // })
+      .filterHandler(function(dimension, filter) {
+        filter[0] && filter[0][0] ? x(filter[0]) : null;
+        // обработка фильтра
+        //   var newFilter = filter + 10;
+        //   dimension.filter(newFilter);
+        //   return newFilter; // set the actual filter value to the new value
+        dimension.filter(filter[0]); // perform filtering
+        return filter; // return the actual filter value
+      })
       // end my обработка фильтра
 
       .renderlet(function(chart){
@@ -161,28 +177,47 @@
     // end my 
 
     // делим на группы ж/м и подсчитываем общее количество каждой группы.
-    var genderGroup  = dateByGender.group().reduceSum(function(d) {
+    var genderGroup = dateByGender.group().reduceSum(function(d) {
       return +d.customers_cnt;
     });
 
+    // цвета графика sexChart
+    var colorSexChart = d3.scale.ordinal().range(['#4682b4', '#ffc0cb']);
+
     sexChart
-      .width(100)
-      .height(100)
+      .width(210)
+      .height(225)
       .dimension(dateByGender)
       .group(genderGroup)
+      // внешний отступ крафика
+      .externalRadiusPadding(10)
+      // сдвиг чата по y
+      .cy(105)
+      .colors(colorSexChart)
+      .legend(dc.legend()
+        .x(45).y(205)
+        .horizontal(true)
+        // размер легенды
+        .itemHeight(15)
+        .legendText(function(d, i) { 
+          var result;
+          result = d.name == 1 ? 'Мужчин' : 'Женщин';
+          return result;
+        })
+      )
       .label(function(d) { 
         var result;
         if (d.key == 1) {
-          result = 'Мужчин: ' + d.value;
+          result = d.value;
         } else {
-          result = 'Женщин: ' + d.value;
+          result = d.value;
         }
         return result;
       });
   // end sex chart
 
   // age chart
-    var ageChart    = dc.pieChart("#ageChart");
+    var ageChart = dc.pieChart("#ageChart");
     
     // dimension по возрасту
     var dateByAge = dataCross.dimension(function(d) { return d.age; });
@@ -192,23 +227,54 @@
       return +d.customers_cnt;
     });
 
+    // цвета графика sexChart
+    var colorАgeChart = d3.scale.ordinal().range(['#c4af1a', '#ffa500', '#ff0000', '#a52a2a']);
+
     ageChart
-      .width(200)
-      .height(200)
+      .width(210)
+      .height(285)
       .dimension(dateByAge)
       .group(ageGroup)
+      // внешний отступ графика
+      .externalRadiusPadding(10)
+      // сдвиг чата по y
+      .cy(105)
+      .colors(colorАgeChart)
+      .innerRadius(30)
+      .legend(dc.legend()
+        .x(70).y(205)
+        // .horizontal(true)
+        // размер легенды
+        .itemHeight(15)
+        .legendText(function(d, i) { 
+          var result;
+          if (d.name == 1) {
+            result = 'от 18 до 24';
+          } else if (d.name == 2) {
+            result = 'oт 25 до 35';
+          } else if (d.name == 3) {
+            result = 'oт 36 до 45';
+          } else if (d.name == 4) {
+            result = 'oт 46 до 55';
+          }
+          return result;
+        })
+      )
       .label(function(d) { 
         var result;
         if (d.key == 1) {
-          result = 'от 18 до 24 : ' + d.value;
+          result = d.value;
         } else if (d.key == 2) {
-          result = 'oт 25 до 35: ' + d.value;
+          result = d.value;
         } else if (d.key == 3) {
-          result = 'oт 36 до 45: ' + d.value;
+          result = d.value;
         } else if (d.key == 4) {
-          result = 'oт 46 до 55: ' + d.value;
+          result = d.value;
         }
         return result;
+      })
+      .title(function(d) {
+        return ;
       });
   // age end chart
     dc.renderAll();

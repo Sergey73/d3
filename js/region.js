@@ -1,6 +1,6 @@
 var Region = (function () {
-  var moscowData;
-  var regionLayer;
+  var moscowData,
+    regionLayer;
 
   function init() {
     if(moscowData) return moscowData;

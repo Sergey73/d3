@@ -1,74 +1,76 @@
 <!DOCTYPE html>
 <html>
   <head>
-  <meta charset=utf-8 />
-  <title>A simple map</title>
-  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <script src="http://localhost:35729/livereload.js?snipver=l"></script>
-  <script src="https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.js"></script>
-  <link href="https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.css" rel="stylesheet" />
-  <!-- <script src='https://api.mapbox.com/mapbox.js/plugins/turf/v2.0.2/turf.min.js'></script> -->
-  <script src="./js/d3.js"></script>
-  <script src="http://d3js.org/topojson.v1.min.js"></script>
-  <script src="https://d3js.org/d3-queue.v3.min.js"></script>
-  <script src="./js/crossfilter.min.js"></script>
-  <script src="./js/dc.min.js"></script>
-  <link rel="stylesheet" href="./css/dc.min.css">
-  <link rel="stylesheet" href="./css/style.css">
+	  <meta charset=utf-8 />
+	  <title>A simple map</title>
+	  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+	  <script src="http://localhost:35729/livereload.js?snipver=l"></script>
+	  <script src="https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.js"></script>
+	  <link href="https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.css" rel="stylesheet" />
+	  <!-- <script src='https://api.mapbox.com/mapbox.js/plugins/turf/v2.0.2/turf.min.js'></script> -->
+	  <script src="./js/d3.js"></script>
+	  <script src="http://d3js.org/topojson.v1.min.js"></script>
+	  <script src="https://d3js.org/d3-queue.v3.min.js"></script>
+	  <script src="./js/crossfilter.min.js"></script>
+	  <script src="./js/dc.min.js"></script>
+	  <link rel="stylesheet" href="./css/dc.min.css">
+	  <link rel="stylesheet" href="./css/style.css">
   </head>
   <body>
-  <div id="map"></div>
-  <!-- <div class="legend"></div> -->
-  <div class="filterHomeWork">
-  	<p><b>Отображение географии:</b><Br>
-		  <label><input type="radio" id="home" name="styleStates" value="home" checked>по проживанию</label>
-		  <label><input type="radio" id="work" name="styleStates" value="work">по работе</label>
-		</p>
-  </div>
-  <div class="container">
-    <div> Количество людей посетивших ТР за месяц: 
-    <span>
-      <spnan id="total"></span>
-      человек. 
-    </span>
-    </div>
+	  <div id="map"></div>
 
-    <div class="dc-data-count">
-    <span>
-    <span class="filter-count"></span>
-    человека за период 
-    <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
-    </span>
-    </div>
-    
-    <div>
-    <span>График посещения ТРЦ Мега Химки!!!</span>
-    </div>
-    
-    <div id="sexChart">
-    </div>
+	  <div class="filter-homeWork">
+	  	<p><b>Отображение географии:</b><Br>
+			  <label><input type="radio" id="home" name="styleStates" value="home" checked>по проживанию</label>
+			  <label><input type="radio" id="work" name="styleStates" value="work">по работе</label>
+			</p>
+	  </div>
 
-    <div id="ageChart">
-    </div>
+	  <div class="people-count" id="peopleCount">
+	  	<div class="dc-data-count">
+		    <span class="filter-count"></span>
+		    человека за период 
+	  	</div>
+	  	<div> Количество людей посетивших ТР за месяц: 
+	      <spnan id="total"></span>
+		      человек. 
+	    </div>
+	  	<a href="javascript:dc.filterAll(); dc.renderAll();">Сбрость филтры</a>
+	    <div class=".dc-data-count">
+	      <span class="filter-count"></span>
+	      <span class="total-count"></span>
+	    </div>
+	 <!--    <div class="reset">
+	      <span class="filter"></span>
+	    </div> -->
+	    <div class="dataStart"></div>
+	    <div class="dataEnd"></div>
+	  </div>
 
-    <div id="peopleCount">
-    <div class=".dc-data-count">
-      <span class="filter-count"></span>
-      <span class="total-count"></span>
-    </div>
-    <div class="reset">
-      <span class="filter"></span>
-    </div>
-    </div>
+		<div class="charts" id="sexChart">
+			<div>Возраст</div>
+		</div>
+		
+		<div class="charts" id="ageChart">
+			<div>Пол</div>
+		</div>
 
-  </div>
-  <script id="popup-template" type="text/template">
-    <h2>{{regionName}}</h2>
-    <strong>Живут: </strong>{{peopleHome}} <br>
-    <strong>Работают: </strong>{{peopleWork}} <br>
-  </script>
-  <script src="./js/region.js"></script>
-  <script src="./js/map.js"></script>
-  <script src="./js/people-count.js"></script>
+
+<!-- 	  <div class="dc-data-count">
+	    <span>
+		    <span class="filter-count"></span>
+		    человека за период 
+		    
+	    </span>
+	  </div> -->
+
+	  <script id="popup-template" type="text/template">
+	    <h2>{{regionName}}</h2>
+	    <strong>Живут: </strong>{{peopleHome}} <br>
+	    <strong>Работают: </strong>{{peopleWork}} <br>
+	  </script>
+	  <script src="./js/region.js"></script>
+	  <script src="./js/map.js"></script>
+	  <script src="./js/people-count.js"></script>
   </body>
 </html>

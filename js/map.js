@@ -158,6 +158,8 @@
     }, 100);
   }
 
+  var num = '2';
+  d3.select("body").data(num);
   // создаем легенду
   function createLegend() {
     var grades = [].slice.call(mapRange).reverse(), // creates a copy of ranges and reverses it
