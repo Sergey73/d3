@@ -11,12 +11,16 @@
     regionLayer;
 
   init();
-
+// [56.40782, 35.57098], [55.05792, 39.96002]
   function init () {
     L.mapbox.accessToken = 'pk.eyJ1Ijoic2VyZ2V5NzMiLCJhIjoiY2lyM3JhYnAxMDAyeGh5bnFmczh3cTRseiJ9.KVe54Q2NCigy3J0j3didAA';
     // подложка mapbox
-    map = L.mapbox.map('map', 'mapbox.dark')
-      .setView([55.87685, 37.43729], 11);
+    map = L.mapbox.map('map', 'mapbox.dark', { 
+      zoomControl:false,
+      minZoom: 9,
+      maxBounds: [[56.40782, 35.57098], [55.05792, 39.96002]]
+    })
+      .setView([55.751244, 37.618423], 9);
 
     // данные по ТЦ
     shopsData = [
@@ -40,7 +44,7 @@
     mapRange = [ 5000, 1000, 800, 500, 300, 100, 0 ]; 
 
     // легенда
-    legend = L.mapbox.legendControl({position: 'bottomleft'}).addLegend(createLegend()).addTo(map);
+    legend = L.mapbox.legendControl({position: 'topleft'}).addLegend(createLegend()).addTo(map);
     
     // popup с данными о регионе
     popup = new L.Popup({ autoPan: false, className: 'statsPopup' });
@@ -159,8 +163,6 @@
     }, 100);
   }
 
-  var num = '2';
-  d3.select("body").data(num);
   // создаем легенду
   function createLegend() {
     var grades = [].slice.call(mapRange).reverse(), // creates a copy of ranges and reverses it
@@ -257,5 +259,4 @@
     }
     markerLayer.setIcon(L.mapbox.marker.icon( markerLayer.feature.properties));
   }
-
 })(Region, Chart);

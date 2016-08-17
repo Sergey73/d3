@@ -44,10 +44,13 @@ var Chart = (function() {
     // общее количество людей
     var totalPeople = all.reduceSum(function(d) {
       return +d.customers_cnt;
-    });
+    }).value();
 
-    // всего людей за месяц
-    d3.select("#total").text(totalPeople.value());
+    // для удобства вотприятия используем формат 000,000
+    var formatNumber = d3.format(',d');
+    // отображение общего количества людей за месяц
+    d3.select(".filter-count").text(formatNumber(totalPeople));
+    // отображение  выбранного ТЦ
     d3.select(".shop-name").text(selectShop.name);
 
     // вывод текста общее количество людей 
@@ -55,17 +58,24 @@ var Chart = (function() {
       .dimension(dataCross)
       .group(all);
 
+    // отображение периода времени
+    showRangeDate(selectShop.minMaxDate);
+
     createTimeChartData(dataCross);
     createSexChartData(dataCross);
     createAgeChartData(dataCross);
   }
 
   function rerenderCharts(chart, date, group) {
-    chart.on('renderlet', function(chart) {
-      chart.dimension(date);
-      chart.group(group);
-    });
-    dc.renderAll();
+    // меняем ось Y только в timeChart графике и сбрасываем фильтр
+    if (typeof(chart.y) == 'function') {
+      chart.y(d3.scale.linear().domain([0, selectShop.maxPeopleInDay + 5000]));
+      dc.filterAll();
+    } 
+    chart
+      .dimension(date)
+      .group(group)
+      .redraw();
   }
 
   function createTimeChartData(dataCross) {
@@ -74,7 +84,6 @@ var Chart = (function() {
     
     // создаем группы по дням
     var daysGroup = dateByDay.group(d3.time.day)
-    
     // считаем количество людей посетивших торговый центр за день
       .reduceSum(function(d) {
         return +d.customers_cnt;
@@ -88,7 +97,10 @@ var Chart = (function() {
   }
 
   function createTimeChart(dateByDay, daysGroup) {
-    timeChart = dc.barChart("#peopleCount");
+    var that = this;
+    that.dateByDay = dateByDay;
+    that.daysGroup = daysGroup;
+    timeChart = dc.barChart("#timeChart");
 
     timeChart
       .width(1200)
@@ -108,8 +120,11 @@ var Chart = (function() {
       .colors('#ffb80d')
       .renderLabel(true)
       .filterHandler(function(dimension, filter) {
-        if (filter[0] && filter[0][0]) {
-          parseDate(filter[0]);
+        var rangeDate = filter[0];
+        if (rangeDate && rangeDate[0]) {
+          showRangeDate(rangeDate);
+          dimension.filter(rangeDate);
+
           return filter; 
         } 
       })
@@ -122,7 +137,6 @@ var Chart = (function() {
   }
 
   function createSexChartData(dataCross) {
-    
     // dimension по полу
     var dateByGender = dataCross.dimension(function(d) { return d.gender; });
 
@@ -171,6 +185,9 @@ var Chart = (function() {
         }
         return result;
       })
+      .title(function(d) {
+        return ;
+      })
       .render();
   }
 
@@ -183,8 +200,7 @@ var Chart = (function() {
       return +d.customers_cnt;
     });
 
-    // создаем график по возрасту
-     // создаем или обновляем созданные график по полу
+     // создаем или обновляем созданные график по возрасту
     ageChart ? rerenderCharts(ageChart, dateByAge, ageGroup) : createAgeChart(dateByAge, ageGroup);
   }
 
@@ -242,10 +258,10 @@ var Chart = (function() {
     .render();
   }
   
- function parseDate(timeArr) {
+ function showRangeDate(timeArr) {
     var startData = d3.select('.dataStart');
     var endData = d3.select('.dataEnd');
-    var formatTime = d3.time.format("%d %B %Y %H:%M:%S");
+    var formatTime = d3.time.format("%d/%m/%Y %H:%M:%S");
     var start = formatTime(timeArr[0]);
     var end = formatTime(timeArr[1]);
     startData.text(start);

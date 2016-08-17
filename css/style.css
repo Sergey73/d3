@@ -1,20 +1,35 @@
 body { 
 	margin:0;
 	padding:0; 
+	overflow: hidden;
+	font: 12px/20px 'Helvetica Neue',Arial,Helvetica,sans-serif;
 }
+
+.title {
+  position: absolute;
+  top: 0;
+  color: white;
+  z-index: 1000;
+  text-align: center;
+  width: 100%;
+  font-size: 20px;
+  margin: 15px;
+}
+
 #map { 
 	position: absolute;
 	top:0;
 	bottom:0;
 	width:100%;
 	height: 100%;
-	/* display: none; */
 }
 
-.legend {
-	position: absolute;
-	bottom: 0;
-	background-color: yellow;
+.map-legend {
+  background-color: black;
+  color: white;
+  border: 1px solid white;
+  border-radius: 3px;
+  width: 197px;
 }
 
 .map-legend i {
@@ -28,6 +43,7 @@ body {
 .leaflet-popup-close-button {
   display: none;
 }
+
 .leaflet-popup-content-wrapper {
   pointer-events: none;
 }
@@ -37,51 +53,49 @@ body {
   fill: white;
 }
 
-.people-count {
+#timeChart {
 	position: absolute;
 	text-align: center;
 	width: 100%;
 	bottom: 40px;
-	right: 0;
 	color: white;
 	background-color: rgba(0,0,0,.75);
 }
 
 .charts {
+	position: absolute;
 	margin: 10px;
 	border-radius: 3px;
   border: thin solid white;
 	background-color: rgba(0,0,0,1);
-	position: absolute;
+	right: 0;
 }
 
 .charts div {
 	color: white;
-  font-size: 20px;
+  /*font-size: 20px;*/
   text-align: center;
   padding-top: 5px;
 }
 
 #sexChart {
-	right: 0;
+	top: 0;
 }
 
 #ageChart {
-	right: 0;
 	top: 273px;
 }
 
 .filter-homeWork {
-  background: #fff;
-  position:absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 100;
-  padding: 10px;
-  border: thin solid grey;
-  border-radius:3px;
-  font: 12px/20px 'Helvetica Neue',Arial,Helvetica,sans-serif;
-  color: rgba(0,0,0,.75);
+	position: absolute;
+  bottom: 125px;
+	z-index: 102;
+	color: white;
+	padding: 20px;	
+}
+
+.filter-homeWork a { 
+	color: white;
 }
 
 .filter-homeWork p { 
@@ -91,4 +105,31 @@ body {
 .filter-homeWork label {
 	cursor: pointer;
 	display: block;
+}
+
+.info {
+	width: 175px;
+	position: absolute;
+	background-color: black;
+  left: 0;
+  z-index: 100;
+  margin: 10px;
+  padding: 10px;
+  color: white;
+  border: thin solid white;
+  border-radius:3px;
+  bottom: 270px;
+}
+
+.dc-data-count {
+	margin: 0;
+}
+
+.color-font {
+  color: #3182bd;
+  font-weight: 700;
+}
+
+.title-time-chart {
+  margin-top: 5px;
 }
